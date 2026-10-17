@@ -113,6 +113,13 @@ Navigate to **DMS Settings → Plugins → Hyprland Layout Manager**:
 
 ---
 
+## 💙 Acknowledgments & Credits
+
+- Inspired by and adapted from [DMSMangoWMLayoutManager](https://github.com/omarluq/DMSMangoWMLayoutManager) by **Omar Alani** (licensed under MIT).
+- Re-architected and completely engineered with a custom `hyprctl` daemon engine (`hypr_layout.py`) to bring the dynamic layout switching workflow natively to **Hyprland**.
+
+---
+
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).

@@ -28,12 +28,7 @@ A visual layout switcher, cycle rotator, and window management plugin for **Hypr
 
 ## 📸 Interface Showcase
 
-### 1. DankBar Widget Pill
-Shows your current layout icon and code dynamically. Hovering and scrolling allows seamless layout cycling across active workspaces.
-
-![Bar Widget](assets/bar-pill.png)
-
-### 2. Layout Selector Popout
+### Layout Selector Popout
 Displays interactive preview cards for each layout mode. The active layout is highlighted with the current DMS accent color.
 
 ![Layout Popout](assets/layout-popout.png)

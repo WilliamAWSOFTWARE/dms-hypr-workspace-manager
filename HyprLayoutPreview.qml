@@ -8,8 +8,8 @@ Rectangle {
     property bool hovered: false
     property var previewModel: []
 
-    implicitHeight: 52
-    radius: Theme.cornerRadius - 4
+    implicitHeight: Theme.iconSize * 2 + Theme.spacingXS
+    radius: Theme.cornerRadius
     color: root.selected ? Qt.alpha(Theme.surface, 0.94) : Qt.alpha(Theme.surface, 0.76)
     border.color: root.selected ? Qt.alpha(Theme.primary, 0.6) : Qt.alpha(Theme.outline, 0.6)
     border.width: 1
@@ -17,8 +17,8 @@ Rectangle {
 
     Rectangle {
         anchors.fill: parent
-        anchors.margins: 3
-        radius: Math.max(3, root.radius - 2)
+        anchors.margins: Theme.spacingXXS
+        radius: Theme.cornerRadius
         color: root.selected ? Qt.alpha(Theme.surfaceContainer, 0.9) : Qt.alpha(Theme.surfaceContainerHigh, 0.86)
         border.color: Qt.alpha(Theme.outline, 0.3)
         border.width: 1
@@ -27,7 +27,7 @@ Rectangle {
         Item {
             id: viewport
             anchors.fill: parent
-            anchors.margins: 6
+            anchors.margins: Theme.spacingXS
 
             Repeater {
                 model: root.previewModel
@@ -39,7 +39,7 @@ Rectangle {
                     y: viewport.height * modelData.y
                     width: Math.max(2, viewport.width * modelData.w)
                     height: Math.max(2, viewport.height * modelData.h)
-                    radius: 4
+                    radius: Theme.spacingXS
                     z: modelData.z || 0
                     opacity: modelData.opacity === undefined ? 1 : modelData.opacity
                     color: modelData.accent

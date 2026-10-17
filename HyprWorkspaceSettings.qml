@@ -74,13 +74,6 @@ PluginSettings {
             scrollList.items = updated;
         }
 
-        function loadValue() {
-            const settings = findSettings();
-            if (settings) {
-                items = settings.loadValue(settingKey, defaultValue);
-            }
-        }
-
         delegate: Component {
             StyledRect {
                 id: row

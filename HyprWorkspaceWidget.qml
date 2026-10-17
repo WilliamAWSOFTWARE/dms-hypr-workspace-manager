@@ -38,8 +38,8 @@ PluginComponent {
     readonly property string monitorName: root.parentScreen && root.parentScreen.name ? String(root.parentScreen.name) : (currentState && currentState.monitor ? String(currentState.monitor) : "")
     readonly property string workspaceName: currentState && currentState.workspaceName ? String(currentState.workspaceName) : "1"
 
-    popoutWidth: isUltrawide ? 540 : 460
-    popoutHeight: Math.min(420, root.parentScreen ? Math.round(root.parentScreen.height * 0.46) : 420)
+    popoutWidth: isUltrawide ? (Theme.spacingM * 34) : (Theme.spacingM * 29)
+    popoutHeight: Math.min(Theme.spacingM * 26, root.parentScreen ? Math.round(root.parentScreen.height * 0.46) : (Theme.spacingM * 26))
 
     onMonitorNameChanged: {
         root.refreshCurrentLayout();
@@ -60,7 +60,7 @@ PluginComponent {
             const evName = event.name;
             if (evName === "workspace" || evName === "workspacev2" || 
                 evName === "changefloatingmode" || evName === "fullscreen" || 
-                evName === "configreloaded" || evName.indexOf("layout") !== -1) {
+                evName === "configreloaded") {
                 eventDebounceTimer.restart();
             }
         }
@@ -363,7 +363,7 @@ PluginComponent {
                         id: buttonGrid
                         x: Theme.spacingM
                         y: Theme.spacingS
-                        width: parent.width - Theme.spacingM * 2 - 8
+                        width: parent.width - Theme.spacingM * 2 - Theme.spacingS
                         columns: root.gridColumns
                         spacing: Theme.spacingS
 
@@ -402,7 +402,7 @@ PluginComponent {
 
                         DankButton {
                             width: actionRow.buttonWidth
-                            buttonHeight: 36
+                            buttonHeight: Theme.buttonHeightS
                             radius: Theme.cornerRadius
                             iconName: "web_asset"
                             iconSize: Theme.iconSizeSmall
@@ -414,7 +414,7 @@ PluginComponent {
 
                         DankButton {
                             width: actionRow.buttonWidth
-                            buttonHeight: 36
+                            buttonHeight: Theme.buttonHeightS
                             radius: Theme.cornerRadius
                             iconName: "fullscreen"
                             iconSize: Theme.iconSizeSmall
@@ -426,7 +426,7 @@ PluginComponent {
 
                         DankButton {
                             width: actionRow.buttonWidth
-                            buttonHeight: 36
+                            buttonHeight: Theme.buttonHeightS
                             radius: Theme.cornerRadius
                             iconName: "layers"
                             iconSize: Theme.iconSizeSmall
@@ -438,7 +438,7 @@ PluginComponent {
 
                         DankButton {
                             width: actionRow.buttonWidth
-                            buttonHeight: 36
+                            buttonHeight: Theme.buttonHeightS
                             radius: Theme.cornerRadius
                             iconName: "alt_route"
                             iconSize: Theme.iconSizeSmall

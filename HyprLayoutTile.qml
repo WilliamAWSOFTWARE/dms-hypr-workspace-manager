@@ -15,7 +15,7 @@ Rectangle {
     readonly property bool hovered: buttonArea.containsMouse
 
     implicitHeight: contentColumn.implicitHeight + Theme.spacingS * 2
-    radius: Theme.cornerRadius - 2
+    radius: Theme.cornerRadius
     color: root.selected ? Qt.alpha(Theme.primary, 0.14) : (root.hovered ? Theme.surfaceContainer : Theme.surfaceContainerHigh)
     border.color: root.selected ? Theme.primary : Qt.alpha(Theme.outline, 0.6)
     border.width: root.selected ? 2 : 1
@@ -24,7 +24,7 @@ Rectangle {
         id: contentColumn
         anchors.fill: parent
         anchors.margins: Theme.spacingS
-        spacing: 4
+        spacing: Theme.spacingXS
 
         HyprLayoutPreview {
             width: parent.width

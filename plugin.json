@@ -1,0 +1,15 @@
+{
+	"id": "hyprWorkspaceManager",
+	"name": "Hyprland Workspace & Window Manager",
+	"description": "Visual workspace switcher, window mover, and tiling layout manager for Hyprland",
+	"version": "1.0.0",
+	"author": "WilliamAWSOFTWARE",
+	"type": "widget",
+	"capabilities": ["dankbar-widget", "window-management", "hyprland", "workspaces"],
+	"component": "./HyprWorkspaceWidget.qml",
+	"settings": "./HyprWorkspaceSettings.qml",
+	"icon": "dashboard_customize",
+	"requires_dms": ">=1.2.0",
+	"requires": ["hyprctl", "python3"],
+	"permissions": ["process", "settings_read", "settings_write"]
+}

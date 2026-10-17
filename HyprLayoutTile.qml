@@ -14,17 +14,17 @@ Rectangle {
 
     readonly property bool hovered: buttonArea.containsMouse
 
-    implicitHeight: contentColumn.implicitHeight + Theme.spacingM * 2
-    radius: Theme.cornerRadius
-    color: root.selected ? Qt.alpha(Theme.primary, 0.12) : (root.hovered ? Theme.surfaceContainer : Theme.surfaceContainerHigh)
-    border.color: root.selected ? Theme.primary : Theme.outline
+    implicitHeight: contentColumn.implicitHeight + Theme.spacingS * 2
+    radius: Theme.cornerRadius - 2
+    color: root.selected ? Qt.alpha(Theme.primary, 0.14) : (root.hovered ? Theme.surfaceContainer : Theme.surfaceContainerHigh)
+    border.color: root.selected ? Theme.primary : Qt.alpha(Theme.outline, 0.6)
     border.width: root.selected ? 2 : 1
 
     Column {
         id: contentColumn
         anchors.fill: parent
-        anchors.margins: Theme.spacingM
-        spacing: Theme.spacingS
+        anchors.margins: Theme.spacingS
+        spacing: 4
 
         HyprLayoutPreview {
             width: parent.width
@@ -37,11 +37,12 @@ Rectangle {
         StyledText {
             width: parent.width
             text: root.layout.label
-            color: Theme.surfaceText
-            font.pixelSize: Theme.fontSizeSmall
-            font.weight: root.selected ? Font.DemiBold : Font.Medium
+            color: root.selected ? Theme.primary : Theme.surfaceText
+            font.pixelSize: Theme.fontSizeSmall - 1
+            font.weight: root.selected ? Font.DemiBold : Font.Normal
             horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.WordWrap
+            elide: Text.ElideRight
+            maximumLineCount: 1
         }
     }
 

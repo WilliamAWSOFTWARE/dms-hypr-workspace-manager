@@ -32,11 +32,17 @@ PluginComponent {
     readonly property bool busy: queryProcess.running || setProcess.running
 
     property var layoutOptions: root.visibleLayoutOptions()
-    readonly property string monitorName: currentState && currentState.monitor ? String(currentState.monitor) : (root.parentScreen && root.parentScreen.name ? String(root.parentScreen.name) : "")
+    readonly property bool isUltrawide: root.parentScreen ? (root.parentScreen.width >= 2400) : false
+    readonly property int gridColumns: isUltrawide ? 4 : 3
+    readonly property string monitorName: root.parentScreen && root.parentScreen.name ? String(root.parentScreen.name) : (currentState && currentState.monitor ? String(currentState.monitor) : "")
     readonly property string workspaceName: currentState && currentState.workspaceName ? String(currentState.workspaceName) : "1"
 
-    popoutWidth: 560
-    popoutHeight: 460
+    popoutWidth: isUltrawide ? 620 : 500
+    popoutHeight: Math.min(480, root.parentScreen ? Math.round(root.parentScreen.height * 0.52) : 480)
+
+    onMonitorNameChanged: {
+        root.refreshCurrentLayout();
+    }
 
     pillRightClickAction: function () {
         root.toggleRightClickLayout();
@@ -68,7 +74,7 @@ PluginComponent {
     function refreshCurrentLayout() {
         if (queryProcess.running) return;
         queryBuffer = "";
-        queryProcess.command = ["python3", root.scriptPath, "get"];
+        queryProcess.command = ["python3", root.scriptPath, "get", root.monitorName];
         queryProcess.running = true;
     }
 
@@ -78,13 +84,13 @@ PluginComponent {
         lastError = "";
         recordLayoutTransition(layoutId);
 
-        setProcess.command = ["python3", root.scriptPath, "set", layoutId];
+        setProcess.command = ["python3", root.scriptPath, "set", layoutId, root.monitorName];
         setProcess.running = true;
     }
 
     function runQuickAction(actionName) {
         if (actionProcess.running) return;
-        actionProcess.command = ["python3", root.scriptPath, "action", actionName];
+        actionProcess.command = ["python3", root.scriptPath, "action", actionName, root.monitorName];
         actionProcess.running = true;
     }
 
@@ -274,6 +280,7 @@ PluginComponent {
 
                 // Header
                 Item {
+                    id: headerItem
                     width: parent.width
                     implicitHeight: titleRow.implicitHeight
 
@@ -330,20 +337,21 @@ PluginComponent {
                     }
                 }
 
-                // 3-Column Layout Grid
+                // Layout Grid (dynamic 3 or 4 columns based on screen width, bounded flickable)
                 DankFlickable {
+                    id: gridFlickable
                     width: parent.width
-                    height: Math.min(buttonGrid.implicitHeight + Theme.spacingM * 2, root.parentScreen ? root.parentScreen.height * 0.75 : 700)
+                    height: Math.min(buttonGrid.implicitHeight + Theme.spacingS * 2, Math.max(260, root.popoutHeight - headerItem.implicitHeight - actionRowBox.implicitHeight - Theme.spacingM * 3))
                     clip: true
                     contentWidth: width
-                    contentHeight: buttonGrid.implicitHeight + Theme.spacingM * 2
+                    contentHeight: buttonGrid.implicitHeight + Theme.spacingS * 2
 
                     Grid {
                         id: buttonGrid
                         x: Theme.spacingM
-                        y: Theme.spacingM
-                        width: parent.width - Theme.spacingM * 2 - 12
-                        columns: 3
+                        y: Theme.spacingS
+                        width: parent.width - Theme.spacingM * 2 - 8
+                        columns: root.gridColumns
                         spacing: Theme.spacingS
 
                         Repeater {
@@ -363,6 +371,7 @@ PluginComponent {
 
                 // Quick Action Bar
                 Rectangle {
+                    id: actionRowBox
                     width: parent.width
                     implicitHeight: actionRow.implicitHeight + Theme.spacingS * 2
                     radius: Theme.cornerRadius
@@ -372,12 +381,15 @@ PluginComponent {
 
                     Row {
                         id: actionRow
+                        width: parent.width - Theme.spacingM * 2
                         anchors.centerIn: parent
-                        spacing: Theme.spacingM
+                        spacing: Theme.spacingS
+
+                        readonly property real buttonWidth: (width - spacing * 3) / 4
 
                         // Float toggle
                         Rectangle {
-                            implicitWidth: 100
+                            width: actionRow.buttonWidth
                             implicitHeight: 34
                             radius: Theme.cornerRadius - 2
                             color: root.currentState && root.currentState.isFloating ? Qt.alpha(Theme.primary, 0.2) : Theme.surfaceContainer
@@ -386,10 +398,10 @@ PluginComponent {
 
                             Row {
                                 anchors.centerIn: parent
-                                spacing: 6
+                                spacing: 5
                                 DankIcon {
                                     name: "web_asset"
-                                    size: 16
+                                    size: 15
                                     color: root.currentState && root.currentState.isFloating ? Theme.primary : Theme.surfaceText
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
@@ -409,7 +421,7 @@ PluginComponent {
 
                         // Fullscreen / Monocle toggle
                         Rectangle {
-                            implicitWidth: 110
+                            width: actionRow.buttonWidth
                             implicitHeight: 34
                             radius: Theme.cornerRadius - 2
                             color: root.currentState && root.currentState.isFullscreen ? Qt.alpha(Theme.primary, 0.2) : Theme.surfaceContainer
@@ -418,10 +430,10 @@ PluginComponent {
 
                             Row {
                                 anchors.centerIn: parent
-                                spacing: 6
+                                spacing: 5
                                 DankIcon {
                                     name: "fullscreen"
-                                    size: 16
+                                    size: 15
                                     color: root.currentState && root.currentState.isFullscreen ? Theme.primary : Theme.surfaceText
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
@@ -441,7 +453,7 @@ PluginComponent {
 
                         // Group / Deck toggle
                         Rectangle {
-                            implicitWidth: 100
+                            width: actionRow.buttonWidth
                             implicitHeight: 34
                             radius: Theme.cornerRadius - 2
                             color: root.currentState && root.currentState.isGrouped ? Qt.alpha(Theme.primary, 0.2) : Theme.surfaceContainer
@@ -450,10 +462,10 @@ PluginComponent {
 
                             Row {
                                 anchors.centerIn: parent
-                                spacing: 6
+                                spacing: 5
                                 DankIcon {
                                     name: "layers"
-                                    size: 16
+                                    size: 15
                                     color: root.currentState && root.currentState.isGrouped ? Theme.primary : Theme.surfaceText
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
@@ -473,7 +485,7 @@ PluginComponent {
 
                         // Split toggle (Dwindle)
                         Rectangle {
-                            implicitWidth: 100
+                            width: actionRow.buttonWidth
                             implicitHeight: 34
                             radius: Theme.cornerRadius - 2
                             color: Theme.surfaceContainer
@@ -482,10 +494,10 @@ PluginComponent {
 
                             Row {
                                 anchors.centerIn: parent
-                                spacing: 6
+                                spacing: 5
                                 DankIcon {
                                     name: "alt_route"
-                                    size: 16
+                                    size: 15
                                     color: Theme.surfaceText
                                     anchors.verticalCenter: parent.verticalCenter
                                 }

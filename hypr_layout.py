@@ -16,7 +16,7 @@ def hypr_eval(code):
         sys.stderr.write(f"hypr_eval error: {e}\n")
         return False
 
-def get_state():
+def get_state(target_monitor=None):
     try:
         gl_out = subprocess.check_output(["hyprctl", "-j", "getoption", "general:layout"])
         gl = json.loads(gl_out).get("str", "dwindle")
@@ -29,17 +29,55 @@ def get_state():
     except Exception:
         mo = "left"
 
-    try:
-        aw_out = subprocess.check_output(["hyprctl", "-j", "activewindow"])
-        aw = json.loads(aw_out)
-    except Exception:
-        aw = {}
+    target_ws = None
+    target_mon_info = None
+    if target_monitor:
+        try:
+            mons = json.loads(subprocess.check_output(["hyprctl", "-j", "monitors"]))
+            for m in mons:
+                if str(m.get("name", "")).strip().lower() == str(target_monitor).strip().lower():
+                    target_ws = m.get("activeWorkspace", {})
+                    target_mon_info = m
+                    break
+        except Exception:
+            pass
 
-    try:
-        ws_out = subprocess.check_output(["hyprctl", "-j", "activeworkspace"])
-        ws = json.loads(ws_out)
-    except Exception:
-        ws = {}
+    if target_ws and target_ws.get("id"):
+        ws = target_ws
+        ws_id = ws.get("id")
+        monitor_name = target_mon_info.get("name", target_monitor) if target_mon_info else target_monitor
+        aw = {}
+        try:
+            curr_aw = json.loads(subprocess.check_output(["hyprctl", "-j", "activewindow"]))
+            if curr_aw.get("workspace", {}).get("id") == ws_id:
+                aw = curr_aw
+        except Exception:
+            pass
+
+        if not aw:
+            try:
+                clients = json.loads(subprocess.check_output(["hyprctl", "-j", "clients"]))
+                for c in clients:
+                    if c.get("workspace", {}).get("id") == ws_id:
+                        aw = c
+                        break
+            except Exception:
+                pass
+    else:
+        try:
+            ws = json.loads(subprocess.check_output(["hyprctl", "-j", "activeworkspace"]))
+        except Exception:
+            ws = {}
+        try:
+            aw = json.loads(subprocess.check_output(["hyprctl", "-j", "activewindow"]))
+        except Exception:
+            aw = {}
+        monitor_name = ws.get("monitor", target_monitor or "")
+
+    # Check if workspace has a per-workspace tiledLayout override
+    ws_tiled = ws.get("tiledLayout")
+    if ws_tiled and ws_tiled in ("dwindle", "master", "scroller"):
+        gl = ws_tiled
 
     fs = aw.get("fullscreen", 0) > 0
     grouped = bool(aw.get("grouped", []))
@@ -105,14 +143,31 @@ def get_state():
         "isPinned": pinned,
         "activeWorkspace": ws.get("id", 1),
         "workspaceName": ws.get("name", "1"),
-        "monitor": ws.get("monitor", ""),
+        "monitor": monitor_name,
         "activeTitle": aw.get("title", ""),
         "activeClass": aw.get("class", ""),
         "windowAddress": aw.get("address", "")
     }
 
-def set_layout(layout_id):
-    current = get_state()
+def ensure_monitor_focus(target_monitor):
+    if not target_monitor:
+        return
+    try:
+        mons = json.loads(subprocess.check_output(["hyprctl", "-j", "monitors"]))
+        for m in mons:
+            if str(m.get("name", "")).strip().lower() == str(target_monitor).strip().lower():
+                ws_id = m.get("activeWorkspace", {}).get("id")
+                if ws_id is not None:
+                    hypr_eval(f"hl.dispatch(hl.dsp.workspace.change_id({ws_id}))")
+                break
+    except Exception:
+        pass
+
+def set_layout(layout_id, target_monitor=None):
+    if target_monitor:
+        ensure_monitor_focus(target_monitor)
+
+    current = get_state(target_monitor)
     is_fs = current.get("isFullscreen", False)
 
     if layout_id == "monocle":
@@ -149,9 +204,12 @@ def set_layout(layout_id):
         else:
             hypr_eval(f"hl.config({{ general = {{ layout = '{layout_id}' }} }})")
 
-    return get_state()
+    return get_state(target_monitor)
 
-def quick_action(action):
+def quick_action(action, target_monitor=None):
+    if target_monitor:
+        ensure_monitor_focus(target_monitor)
+
     if action == "toggle_floating":
         hypr_eval("hl.dispatch(hl.dsp.window.float({ action = 'toggle' }))")
     elif action == "toggle_fullscreen":
@@ -164,15 +222,19 @@ def quick_action(action):
         hypr_eval("hl.dispatch(hl.dsp.layout('togglesplit'))")
     elif action == "swap_master":
         hypr_eval("hl.dispatch(hl.dsp.layout('swapwithmaster'))")
-    return get_state()
+    return get_state(target_monitor)
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] == "get":
-        print(json.dumps(get_state()))
-    elif sys.argv[1] == "set" and len(sys.argv) >= 3:
-        print(json.dumps(set_layout(sys.argv[2])))
-    elif sys.argv[1] == "action" and len(sys.argv) >= 3:
-        print(json.dumps(quick_action(sys.argv[2])))
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "get"
+    if cmd == "get":
+        target_mon = sys.argv[2] if len(sys.argv) > 2 else None
+        print(json.dumps(get_state(target_mon)))
+    elif cmd == "set" and len(sys.argv) >= 3:
+        target_mon = sys.argv[3] if len(sys.argv) > 3 else None
+        print(json.dumps(set_layout(sys.argv[2], target_mon)))
+    elif cmd == "action" and len(sys.argv) >= 3:
+        target_mon = sys.argv[3] if len(sys.argv) > 3 else None
+        print(json.dumps(quick_action(sys.argv[2], target_mon)))
     else:
         print(json.dumps(get_state()))
 

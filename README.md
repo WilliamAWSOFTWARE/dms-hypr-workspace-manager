@@ -1,104 +1,80 @@
-# Hyprland Workspace & Window Manager for DankMaterialShell
+# Hyprland Layout Manager (DMS Plugin)
 
-A feature-rich workspace switcher, window manager, and tiling controller widget for **DankMaterialShell (DankLinux)** running on **Hyprland**.
-
-Inspired by `mangoWmLayoutManager`, but purpose-built with native `hyprctl` power.
-
-![DankMaterialShell Hyprland Plugin](https://raw.githubusercontent.com/WilliamAWSOFTWARE/dms-hypr-workspace-manager/main/screenshot.png)
+Un widget y selector visual de layouts para **Hyprland** en **DankMaterialShell (DMS)**, con la misma estética premium y funcionalidad que el Layout Manager de MangoWM.
 
 ---
 
-## Features
+## 🎯 ¿Qué hace este plugin?
 
-### 1. DankBar Widget Pill
-- **Rich Display**:
-  - Active workspace badge (e.g. `1`).
-  - Active focused application name/title with state indicator (Tiling, Floating, or Fullscreen).
-  - Badge counter showing total open windows in the current workspace.
-- **Mouse Shortcuts**:
-  - **Left-Click**: Opens the interactive management popout dashboard.
-  - **Right-Click**: Quick-toggle **Special Workspace / Scratchpad** (customizable in settings).
-  - **Middle-Click**: Quick-toggle Dwindle split orientation (**Toggle Split**).
-  - **Mouse Wheel Scroll**: Smoothly cycle through workspaces with kinetic throttling.
+Permite cambiar y alternar la disposición de tus ventanas en Hyprland en tiempo real desde la barra o mediante un popout visual con esquemas gráficos interactivos.
 
-### 2. Interactive Popout Dashboard
-- **Tiling Quick Toolbar**:
-  - 🔄 **Toggle Split**: Toggle horizontal/vertical split in Hyprland's dwindle layout (`layoutmsg togglesplit`).
-  - ⭐ **Scratchpad**: Instant toggle for your special scratchpad / notes window.
-  - ⬅️ ➡️ ⬆️ ⬇️ **Directional Swap**: Swap window position left, right, up, or down (`swapwindow l/r/u/d`).
-- **Workspaces Matrix (1 to 10)**:
-  - Interactive grid displaying all workspaces with active space highlighting.
-  - Live window chips showing applications running in each workspace.
-  - **Click Card**: Instantly switches to that workspace.
-  - **"Send Active Here" Button**: One-click relocation for the currently focused window.
-- **Window List & Quick Relocation**:
-  - Filter tabs: *In Current Workspace*, *All Windows*, and *Scratchpad*.
-  - Direct 1-click workspace buttons per window: `[ 1 ] [ 2 ] [ 3 ] ... [ 10 ] [ ★ Scratchpad ]` to move any window anywhere immediately.
-  - Per-window actions: Focus (🎯), Toggle Floating (🪟), Fullscreen (🔲), Pin/Sticky (📌), and Close (❌).
+Soporta los 14 estilos de layouts característicos:
+- **Tile (T)**: Master a la izquierda, ventanas apiladas a la derecha.
+- **Right Tile (RT)**: Master a la derecha, ventanas apiladas a la izquierda.
+- **Vertical Tile (VT)**: Master arriba, columnas apiladas abajo.
+- **Center Tile (CT)**: Master en el centro, columnas a izquierda y derecha.
+- **Dwindle (DW)**: Árbol binario en espiral clásico de Hyprland.
+- **Monocle (M)**: Modo pantalla completa / maximizado (una ventana visible a la vez).
+- **Deck / Group (K)**: Ventanas agrupadas en pestañas (Deck/Tabbed group).
+- **Grid (G)**: Cuadrícula equilibrada (pseudotile).
+- **Fair (F)**: Distribución horizontal uniforme (togglesplit).
+- **Vertical Fair (VF)**: Distribución vertical uniforme (master abajo).
+- **Scroller / Vertical Scroller (S / VS)**: Desplazamiento y carrusel de ventanas.
+- **Vertical Grid (VG) / Vertical Deck (VK)**: Variantes verticales para monitores ultrawide o verticales.
 
 ---
 
-## Requirements
+## 🚀 ¿Cómo se usa?
 
-- **Hyprland** (>= 0.40)
-- `hyprctl` (included by default with Hyprland)
-- `python3` (for sub-millisecond state parsing)
+### 1. En la Barra (DankBar)
+El widget muestra el **ícono** y el **código** del layout actual (ejemplo: `DW` para Dwindle, `T` para Tile, `CT` para Center Tile, `M` para Monocle).
+
+- **Clic Izquierdo**: Abre el **Popout Grid** con los esquemas visuales en 3 columnas para elegir directamente cualquier layout.
+- **Clic Derecho**: Alterna rápidamente con el layout objetivo configurado (por defecto: `Monocle` / Fullscreen). Si ya estás en ese layout, regresa automáticamente al anterior.
+- **Clic Central (Rueda del Mouse)**: Alterna con un segundo layout objetivo configurado (por defecto: `Center Tile`).
+- **Scroll (Giro de la rueda o deslizamiento con 2 dedos)**: Pasa al siguiente o anterior layout activo en el ciclo de rotación.
+
+### 2. En el Popout (Menú Desplegable)
+- Muestra una cuadrícula de 3 columnas con esquemas gráficos en miniatura de cada layout.
+- El layout actualmente activo se resalta con el borde y acento del tema de DankMaterialShell.
+- Al hacer clic en cualquier tarjeta, Hyprland aplica instantáneamente la nueva disposición.
+- **Barra de Acciones Rápidas (Quick Actions)** en la parte inferior:
+  - **Float**: Alterna el modo flotante/tiling en la ventana activa.
+  - **Fullscreen**: Alterna pantalla completa / monocle.
+  - **Group**: Agrupa o desagrupa ventanas en pestañas (Deck).
+  - **Split**: Alterna la orientación del split en Dwindle.
 
 ---
 
-## Installation
+## ⚙️ Configuración (Settings)
 
-### Via Git Clone
+Desde **DMS Settings → Plugins → Hyprland Layout Manager**:
+
+1. **Right-click toggle target**: Elige qué layout se activa con el clic derecho en la barra (Monocle, Dwindle, Center Tile, etc., o None para desactivar).
+2. **Middle-click toggle target**: Elige qué layout se activa con el clic central.
+3. **Scroll cycle**:
+   - Usa el ícono del **ojo** para ocultar o mostrar layouts en el ciclo de scroll y en la cuadrícula.
+   - Usa el **manillar de arrastre** para ordenar los layouts según tu preferencia.
+4. **Scroll speed**: Tiempo mínimo de enfriamiento (ms) entre giros de la rueda para evitar saltar varios layouts en trackpads.
+
+---
+
+## 🔧 Requisitos
+
+- **Hyprland** (compatible con 0.50.x hasta 0.56.2+ con soporte para Lua eval y dispatchers nativos).
+- **Python 3** (incluido por defecto en Linux).
+- **DankMaterialShell (DMS)** v1.2.0+.
+
+---
+
+## 📦 Instalación y Actualización
+
+El plugin se encuentra en:
 ```bash
-cd ~/.config/DankMaterialShell/plugins
-git clone https://github.com/WilliamAWSOFTWARE/dms-hypr-workspace-manager.git hyprWorkspaceManager
-dms restart
+~/.config/DankMaterialShell/plugins/hyprWorkspaceManager
 ```
 
-Then enable it in **DMS Settings → Plugins → Hyprland Workspace & Window Manager**, and add `hyprWorkspaceManager` to your bar widgets layout.
-
----
-
-## Configuration
-
-Customizable directly inside DMS Settings → Plugins:
-- **Right-Click Action**: Scratchpad, Toggle Floating, Toggle Split, Fullscreen, or Next Workspace.
-- **Middle-Click Action**: Toggle Split, Toggle Floating, Scratchpad, etc.
-- **Show Window Title**: Toggle title display in bar pill.
-- **Max Title Length**: Character limit before truncation.
-- **Scroll Cooldown (ms)**: Wheel sensitivity to prevent accidental multi-workspace skips.
-- **Silent Move**: Keep focus on current workspace when moving windows to other spaces.
-
----
-
-<details>
-<summary><b>🇪🇸 Documentación en Español (Haz clic para expandir)</b></summary>
-
-### Características
-- **Pill en la barra (DankBar)** con workspace activo, ventana enfocada y conteo de ventanas.
-- **Atajos en barra**:
-  - Clic izquierdo: Abre el Popout Dashboard.
-  - Clic derecho: Alterna el Scratchpad / Special Workspace.
-  - Clic central: Alterna la división de Dwindle (Split).
-  - Scroll: Cambia de espacio de trabajo rápidamente.
-- **Dashboard Popout**:
-  - Matriz 5x2 de espacios de trabajo con chips de aplicaciones en tiempo real.
-  - Botón de enviar ventana activa a cualquier espacio con 1 clic.
-  - Listado de ventanas con botones directos `[ 1 ] [ 2 ] [ 3 ] ... [ 10 ] [ Scratchpad ]`.
-  - Controles de ventana: Flotante, Fullscreen, Pin y Cerrar.
-  - Toolbar de Tiling: Split y Swap direccional (⬅️ ➡️ ⬆️ ⬇️).
-
-### Instalación
+Para recargar los cambios en DMS:
 ```bash
-cd ~/.config/DankMaterialShell/plugins
-git clone https://github.com/WilliamAWSOFTWARE/dms-hypr-workspace-manager.git hyprWorkspaceManager
 dms restart
 ```
-
-</details>
-
----
-
-## License
-
-MIT © [WilliamAWSOFTWARE](https://github.com/WilliamAWSOFTWARE)

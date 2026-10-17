@@ -3,7 +3,7 @@
 [![Hyprland](https://img.shields.io/badge/Hyprland-0.50%2B-blue?logo=wayland&logoColor=white)](https://hyprland.org)
 [![DankMaterialShell](https://img.shields.io/badge/DMS-Plugin-purple?logo=material-design&logoColor=white)](https://github.com/AvengeMedia/DankMaterialShell)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.1.0-green.svg)](plugin.json)
+[![Version](https://img.shields.io/badge/version-1.2.0-green.svg)](plugin.json)
 
 A visual layout switcher, cycle rotator, and window management plugin for **Hyprland** in **DankMaterialShell (DMS)**, bringing the versatile layout workflow of MangoWM into Hyprland with native Material Design aesthetics.
 
@@ -13,8 +13,8 @@ A visual layout switcher, cycle rotator, and window management plugin for **Hypr
 
 ## 🎯 Features
 
-- **Visual Layout Popout**: Interactive popout grid showing live wireframe schematics of all 14 layout arrangements.
-- **DankBar Status Pill**: Displays the active layout icon and mnemonic code (e.g., `DW`, `T`, `CT`, `M`, `S`) directly in your bar.
+- **Visual Layout Popout**: Interactive popout grid showing live wireframe schematics of 8 native Hyprland layout arrangements.
+- **DankBar Status Pill**: Displays the active layout icon and mnemonic code (e.g., `DW`, `T`, `CT`, `M`, `RT`) directly in your bar.
 - **Effortless Mouse Controls**:
   - **Left-Click**: Opens the visual layout selector popout.
   - **Right-Click**: Instantly toggles between your current layout and your preferred target (default: `Monocle` / Fullscreen).
@@ -37,22 +37,19 @@ Displays interactive preview cards for each layout mode. The active layout is hi
 
 ## 📐 Supported Layout Modes
 
-| Code | Name | Description |
-| :---: | :--- | :--- |
-| **`T`** | **Tile** | Master window on the left, stack columns on the right. |
-| **`RT`** | **Right Tile** | Master window on the right, stack columns on the left. |
-| **`VT`** | **Vertical Tile** | Master window on top, secondary windows stacked horizontally below. |
-| **`CT`** | **Center Tile** | Large master window centered, flanked by left and right stack columns. |
-| **`DW`** | **Dwindle** | Classic Hyprland binary-tree spiral layout. |
-| **`M`** | **Monocle** | Fullscreen / single focused window mode. |
-| **`K`** | **Deck (Group)** | Windows grouped into tabs (tabbed deck). |
-| **`G`** | **Grid** | Balanced grid layout with pseudo-tiling. |
-| **`F`** | **Fair** | Even horizontal window distribution. |
-| **`VF`** | **Vertical Fair** | Even vertical window distribution (stacked master). |
-| **`S`** | **Scroller** | Horizontal window carousel / infinite scrolling column layout. |
-| **`VS`** | **Vertical Scroller** | Vertical carousel scrolling layout. |
-| **`VG`** | **Vertical Grid** | Vertical-oriented grid matrix. |
-| **`VK`** | **Vertical Deck** | Vertical tabbed deck representation. |
+| Code | Name | Scope | Description |
+| :---: | :--- | :---: | :--- |
+| **`T`** | **Tile** | Global | Master window on the left, stack columns on the right (master layout). |
+| **`RT`** | **Right Tile** | Global | Master window on the right, stack columns on the left (master layout). |
+| **`VT`** | **Vertical Tile** | Global | Master window on top, secondary windows stacked horizontally below (master layout). |
+| **`CT`** | **Center Tile** | Global | Master window centered, flanked by left and right stack columns (master layout). |
+| **`VF`** | **Vertical Fair** | Global | Master window at the bottom, secondary windows stacked above (master layout). |
+| **`DW`** | **Dwindle** | Global | Classic Hyprland binary-tree spiral layout (dwindle layout). |
+| **`M`** | **Monocle** | Focused Window | Fullscreen mode toggled on the active window. |
+| **`K`** | **Deck** | Focused Window | Tabbed window grouping (deck) toggled on the active window. |
+
+> [!NOTE]
+> **Scope of Layout Operations**: Setting general layouts (`Tile`, `Right Tile`, `Vertical Tile`, `Center Tile`, `Vertical Fair`, `Dwindle`) changes Hyprland's runtime layout configuration globally across workspaces. Setting `Monocle` or `Deck` toggles fullscreen or tabbed grouping on the currently focused window.
 
 ---
 
@@ -65,7 +62,7 @@ Displays interactive preview cards for each layout mode. The active layout is hi
 - **Mouse Wheel / Trackpad Scroll**: Cycle forward or backward through your active layout rotation list.
 
 ### From the Layout Popout
-1. Click on any layout card to immediately re-arrange windows on the current workspace.
+1. Click on any layout card to switch the desktop layout or toggle fullscreen/deck on the active window.
 2. Use the **Quick Actions** bar at the bottom:
    - **Float**: Toggle active window between tiling and floating mode.
    - **Fullscreen**: Toggle fullscreen mode on the active window.

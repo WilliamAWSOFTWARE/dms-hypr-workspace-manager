@@ -38,8 +38,8 @@ PluginComponent {
     readonly property string monitorName: root.parentScreen && root.parentScreen.name ? String(root.parentScreen.name) : (currentState && currentState.monitor ? String(currentState.monitor) : "")
     readonly property string workspaceName: currentState && currentState.workspaceName ? String(currentState.workspaceName) : "1"
 
-    popoutWidth: isUltrawide ? 620 : 500
-    popoutHeight: Math.min(480, root.parentScreen ? Math.round(root.parentScreen.height * 0.52) : 480)
+    popoutWidth: isUltrawide ? 540 : 460
+    popoutHeight: Math.min(420, root.parentScreen ? Math.round(root.parentScreen.height * 0.46) : 420)
 
     onMonitorNameChanged: {
         root.refreshCurrentLayout();
@@ -55,12 +55,12 @@ PluginComponent {
 
     Connections {
         target: Hyprland
-        function onRawEvent(name, data) {
-            if (name === "workspace" || name === "workspacev2" || 
-                name === "focusedmon" || name === "activewindow" || 
-                name === "activewindowv2" || name === "changefloatingmode" || 
-                name === "fullscreen" || name === "configreloaded" ||
-                name.indexOf("layout") !== -1) {
+        function onRawEvent(event) {
+            if (!event || !event.name) return;
+            const evName = event.name;
+            if (evName === "workspace" || evName === "workspacev2" || 
+                evName === "changefloatingmode" || evName === "fullscreen" || 
+                evName === "configreloaded" || evName.indexOf("layout") !== -1) {
                 eventDebounceTimer.restart();
             }
         }
@@ -321,7 +321,7 @@ PluginComponent {
                             }
 
                             StyledText {
-                                text: `Active: ${root.currentLayoutLabel} · Workspace ${root.workspaceName}${root.monitorName ? " (" + root.monitorName + ")" : ""}`
+                                text: `Global Layout: ${root.currentLayoutLabel}${root.monitorName ? " · " + root.monitorName : ""}`
                                 color: Theme.surfaceVariantText
                                 font.pixelSize: Theme.fontSizeSmall - 2
                             }

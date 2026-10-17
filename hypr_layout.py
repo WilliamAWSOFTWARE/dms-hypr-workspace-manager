@@ -177,6 +177,10 @@ def set_layout(layout_id, target_monitor=None):
         if is_fs:
             hypr_eval("hl.dispatch(hl.dsp.window.fullscreen())")
 
+        # Ensure pseudo-tiling is cleared so windows (like Electron/IDE) don't get trapped with fixed aspect ratio / letterbox gaps
+        if layout_id != "grid":
+            hypr_eval("pcall(function() hl.dispatch(hl.dsp.window.pseudo({ action = 'off' })) end)")
+
         if layout_id == "dwindle":
             hypr_eval("hl.config({ general = { layout = 'dwindle' } })")
         elif layout_id == "tile":
@@ -192,7 +196,7 @@ def set_layout(layout_id, target_monitor=None):
         elif layout_id == "deck":
             hypr_eval("hl.dispatch(hl.dsp.group.toggle())")
         elif layout_id == "grid":
-            hypr_eval("hl.config({ general = { layout = 'dwindle' } }) hl.dispatch(hl.dsp.window.pseudo())")
+            hypr_eval("hl.config({ general = { layout = 'dwindle' } }) hl.dispatch(hl.dsp.layout('togglesplit'))")
         elif layout_id == "fair":
             hypr_eval("hl.config({ general = { layout = 'dwindle' } }) hl.dispatch(hl.dsp.layout('togglesplit'))")
         elif layout_id == "vertical_grid":
@@ -200,7 +204,7 @@ def set_layout(layout_id, target_monitor=None):
         elif layout_id == "vertical_deck":
             hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'top' } }) hl.dispatch(hl.dsp.group.toggle())")
         elif layout_id in ("scroller", "vertical_scroller"):
-            hypr_eval("pcall(function() hl.config({ general = { layout = 'scroller' } }) end) hl.dispatch(hl.dsp.layout('rollnext'))")
+            hypr_eval("pcall(function() hl.config({ general = { layout = 'scrolling' } }) end) hl.dispatch(hl.dsp.layout('rollnext'))")
         else:
             hypr_eval(f"hl.config({{ general = {{ layout = '{layout_id}' }} }})")
 

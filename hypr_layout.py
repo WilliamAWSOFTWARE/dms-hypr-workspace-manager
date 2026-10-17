@@ -8,12 +8,42 @@ import sys
 import json
 import subprocess
 
+_has_lua_cached = None
+
+def has_lua():
+    global _has_lua_cached
+    if _has_lua_cached is not None:
+        return _has_lua_cached
+    try:
+        res = subprocess.run(["hyprctl", "eval", "return 1"], capture_output=True, text=True)
+        _has_lua_cached = (res.returncode == 0)
+    except Exception:
+        _has_lua_cached = False
+    return _has_lua_cached
+
 def hypr_eval(code):
     try:
-        res = subprocess.run(["hyprctl", "eval", code], capture_output=True, text=True, check=True)
-        return True
+        res = subprocess.run(["hyprctl", "eval", code], capture_output=True, text=True)
+        return res.returncode == 0
     except Exception as e:
         sys.stderr.write(f"hypr_eval error: {e}\n")
+        return False
+
+def hypr_dispatch(cmd):
+    try:
+        args = ["hyprctl", "dispatch"] + cmd.split()
+        res = subprocess.run(args, capture_output=True, text=True)
+        return res.returncode == 0
+    except Exception as e:
+        sys.stderr.write(f"hypr_dispatch error: {e}\n")
+        return False
+
+def hypr_keyword(key, val):
+    try:
+        res = subprocess.run(["hyprctl", "keyword", key, str(val)], capture_output=True, text=True)
+        return res.returncode == 0
+    except Exception as e:
+        sys.stderr.write(f"hypr_keyword error: {e}\n")
         return False
 
 def get_state(target_monitor=None):
@@ -158,7 +188,10 @@ def ensure_monitor_focus(target_monitor):
             if str(m.get("name", "")).strip().lower() == str(target_monitor).strip().lower():
                 ws_id = m.get("activeWorkspace", {}).get("id")
                 if ws_id is not None:
-                    hypr_eval(f"hl.dispatch(hl.dsp.workspace.change_id({ws_id}))")
+                    if has_lua():
+                        hypr_eval(f"hl.dispatch(hl.dsp.workspace.change_id({ws_id}))")
+                    else:
+                        hypr_dispatch(f"workspace {ws_id}")
                 break
     except Exception:
         pass
@@ -169,44 +202,95 @@ def set_layout(layout_id, target_monitor=None):
 
     current = get_state(target_monitor)
     is_fs = current.get("isFullscreen", False)
+    use_lua = has_lua()
 
     if layout_id == "monocle":
-        hypr_eval("hl.dispatch(hl.dsp.window.fullscreen())")
+        if use_lua:
+            hypr_eval("hl.dispatch(hl.dsp.window.fullscreen())")
+        else:
+            hypr_dispatch("fullscreen 1")
     else:
         # If currently in fullscreen/monocle, un-fullscreen first
         if is_fs:
-            hypr_eval("hl.dispatch(hl.dsp.window.fullscreen())")
+            if use_lua:
+                hypr_eval("hl.dispatch(hl.dsp.window.fullscreen())")
+            else:
+                hypr_dispatch("fullscreen 1")
 
-        # Ensure pseudo-tiling is cleared so windows (like Electron/IDE) don't get trapped with fixed aspect ratio / letterbox gaps
+        # Ensure pseudo-tiling is cleared so windows don't get trapped with fixed aspect ratio
         if layout_id != "grid":
-            hypr_eval("pcall(function() hl.dispatch(hl.dsp.window.pseudo({ action = 'off' })) end)")
+            if use_lua:
+                hypr_eval("pcall(function() hl.dispatch(hl.dsp.window.pseudo({ action = 'off' })) end)")
+            else:
+                if current.get("pseudo", False):
+                    hypr_dispatch("pseudo")
 
-        if layout_id == "dwindle":
-            hypr_eval("hl.config({ general = { layout = 'dwindle' } })")
-        elif layout_id == "tile":
-            hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'left' } })")
-        elif layout_id == "right_tile":
-            hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'right' } })")
-        elif layout_id == "vertical_tile":
-            hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'top' } })")
-        elif layout_id == "center_tile":
-            hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'center' } })")
-        elif layout_id == "vertical_fair":
-            hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'bottom' } })")
-        elif layout_id == "deck":
-            hypr_eval("hl.dispatch(hl.dsp.group.toggle())")
-        elif layout_id == "grid":
-            hypr_eval("hl.config({ general = { layout = 'dwindle' } }) hl.dispatch(hl.dsp.layout('togglesplit'))")
-        elif layout_id == "fair":
-            hypr_eval("hl.config({ general = { layout = 'dwindle' } }) hl.dispatch(hl.dsp.layout('togglesplit'))")
-        elif layout_id == "vertical_grid":
-            hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'top' } }) hl.dispatch(hl.dsp.layout('rollnext'))")
-        elif layout_id == "vertical_deck":
-            hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'top' } }) hl.dispatch(hl.dsp.group.toggle())")
-        elif layout_id in ("scroller", "vertical_scroller"):
-            hypr_eval("pcall(function() hl.config({ general = { layout = 'scrolling' } }) end) hl.dispatch(hl.dsp.layout('rollnext'))")
+        if use_lua:
+            if layout_id == "dwindle":
+                hypr_eval("hl.config({ general = { layout = 'dwindle' } })")
+            elif layout_id == "tile":
+                hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'left' } })")
+            elif layout_id == "right_tile":
+                hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'right' } })")
+            elif layout_id == "vertical_tile":
+                hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'top' } })")
+            elif layout_id == "center_tile":
+                hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'center' } })")
+            elif layout_id == "vertical_fair":
+                hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'bottom' } })")
+            elif layout_id == "deck":
+                hypr_eval("hl.dispatch(hl.dsp.group.toggle())")
+            elif layout_id == "grid":
+                hypr_eval("hl.config({ general = { layout = 'dwindle' } }) hl.dispatch(hl.dsp.layout('togglesplit'))")
+            elif layout_id == "fair":
+                hypr_eval("hl.config({ general = { layout = 'dwindle' } }) hl.dispatch(hl.dsp.layout('togglesplit'))")
+            elif layout_id == "vertical_grid":
+                hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'top' } }) hl.dispatch(hl.dsp.layout('rollnext'))")
+            elif layout_id == "vertical_deck":
+                hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'top' } }) hl.dispatch(hl.dsp.group.toggle())")
+            elif layout_id in ("scroller", "vertical_scroller"):
+                hypr_eval("pcall(function() hl.config({ general = { layout = 'scrolling' } }) end) hl.dispatch(hl.dsp.layout('rollnext'))")
+            else:
+                hypr_eval(f"hl.config({{ general = {{ layout = '{layout_id}' }} }})")
         else:
-            hypr_eval(f"hl.config({{ general = {{ layout = '{layout_id}' }} }})")
+            if layout_id == "dwindle":
+                hypr_keyword("general:layout", "dwindle")
+            elif layout_id == "tile":
+                hypr_keyword("general:layout", "master")
+                hypr_keyword("master:orientation", "left")
+            elif layout_id == "right_tile":
+                hypr_keyword("general:layout", "master")
+                hypr_keyword("master:orientation", "right")
+            elif layout_id == "vertical_tile":
+                hypr_keyword("general:layout", "master")
+                hypr_keyword("master:orientation", "top")
+            elif layout_id == "center_tile":
+                hypr_keyword("general:layout", "master")
+                hypr_keyword("master:orientation", "center")
+            elif layout_id == "vertical_fair":
+                hypr_keyword("general:layout", "master")
+                hypr_keyword("master:orientation", "bottom")
+            elif layout_id == "deck":
+                hypr_dispatch("togglegroup")
+            elif layout_id == "grid":
+                hypr_keyword("general:layout", "dwindle")
+                hypr_dispatch("layoutmsg togglesplit")
+            elif layout_id == "fair":
+                hypr_keyword("general:layout", "dwindle")
+                hypr_dispatch("layoutmsg togglesplit")
+            elif layout_id == "vertical_grid":
+                hypr_keyword("general:layout", "master")
+                hypr_keyword("master:orientation", "top")
+                hypr_dispatch("layoutmsg rollnext")
+            elif layout_id == "vertical_deck":
+                hypr_keyword("general:layout", "master")
+                hypr_keyword("master:orientation", "top")
+                hypr_dispatch("togglegroup")
+            elif layout_id in ("scroller", "vertical_scroller"):
+                hypr_keyword("general:layout", "scroller")
+                hypr_dispatch("layoutmsg rollnext")
+            else:
+                hypr_keyword("general:layout", layout_id)
 
     return get_state(target_monitor)
 
@@ -214,18 +298,38 @@ def quick_action(action, target_monitor=None):
     if target_monitor:
         ensure_monitor_focus(target_monitor)
 
+    use_lua = has_lua()
     if action == "toggle_floating":
-        hypr_eval("hl.dispatch(hl.dsp.window.float({ action = 'toggle' }))")
+        if use_lua:
+            hypr_eval("hl.dispatch(hl.dsp.window.float({ action = 'toggle' }))")
+        else:
+            hypr_dispatch("togglefloating")
     elif action == "toggle_fullscreen":
-        hypr_eval("hl.dispatch(hl.dsp.window.fullscreen())")
+        if use_lua:
+            hypr_eval("hl.dispatch(hl.dsp.window.fullscreen())")
+        else:
+            hypr_dispatch("fullscreen")
     elif action == "toggle_pin":
-        hypr_eval("hl.dispatch(hl.dsp.window.pin())")
+        if use_lua:
+            hypr_eval("hl.dispatch(hl.dsp.window.pin())")
+        else:
+            hypr_dispatch("pin")
     elif action == "toggle_group":
-        hypr_eval("hl.dispatch(hl.dsp.group.toggle())")
+        if use_lua:
+            hypr_eval("hl.dispatch(hl.dsp.group.toggle())")
+        else:
+            hypr_dispatch("togglegroup")
     elif action == "toggle_split":
-        hypr_eval("hl.dispatch(hl.dsp.layout('togglesplit'))")
+        if use_lua:
+            hypr_eval("hl.dispatch(hl.dsp.layout('togglesplit'))")
+        else:
+            hypr_dispatch("layoutmsg togglesplit")
     elif action == "swap_master":
-        hypr_eval("hl.dispatch(hl.dsp.layout('swapwithmaster'))")
+        if use_lua:
+            hypr_eval("hl.dispatch(hl.dsp.layout('swapwithmaster'))")
+        else:
+            hypr_dispatch("layoutmsg swapwithmaster")
+
     return get_state(target_monitor)
 
 def main():

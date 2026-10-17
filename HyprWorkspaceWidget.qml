@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Io
+import Quickshell.Hyprland
 import qs.Common
 import qs.Widgets
 import qs.Modules.Plugins
@@ -52,11 +53,23 @@ PluginComponent {
         refreshCurrentLayout();
     }
 
+    Connections {
+        target: Hyprland
+        function onRawEvent(name, data) {
+            if (name === "workspace" || name === "workspacev2" || 
+                name === "focusedmon" || name === "activewindow" || 
+                name === "activewindowv2" || name === "changefloatingmode" || 
+                name === "fullscreen" || name === "configreloaded" ||
+                name.indexOf("layout") !== -1) {
+                eventDebounceTimer.restart();
+            }
+        }
+    }
+
     Timer {
-        id: statePollTimer
-        interval: 2000
-        repeat: true
-        running: true
+        id: eventDebounceTimer
+        interval: 150
+        repeat: false
         onTriggered: {
             if (!root.busy) {
                 root.refreshCurrentLayout();
@@ -387,132 +400,52 @@ PluginComponent {
 
                         readonly property real buttonWidth: (width - spacing * 3) / 4
 
-                        // Float toggle
-                        Rectangle {
+                        DankButton {
                             width: actionRow.buttonWidth
-                            implicitHeight: 34
-                            radius: Theme.cornerRadius - 2
-                            color: root.currentState && root.currentState.isFloating ? Qt.alpha(Theme.primary, 0.2) : Theme.surfaceContainer
-                            border.color: root.currentState && root.currentState.isFloating ? Theme.primary : Theme.outline
-                            border.width: 1
-
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 5
-                                DankIcon {
-                                    name: "web_asset"
-                                    size: 15
-                                    color: root.currentState && root.currentState.isFloating ? Theme.primary : Theme.surfaceText
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                StyledText {
-                                    text: "Float"
-                                    color: Theme.surfaceText
-                                    font.pixelSize: Theme.fontSizeSmall - 1
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                            }
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.runQuickAction("toggle_floating")
-                            }
+                            buttonHeight: 36
+                            radius: Theme.cornerRadius
+                            iconName: "web_asset"
+                            iconSize: Theme.iconSizeSmall
+                            text: "Float"
+                            backgroundColor: root.currentState && root.currentState.isFloating ? Theme.primaryContainer : Theme.surfaceContainerHigh
+                            textColor: root.currentState && root.currentState.isFloating ? Theme.primary : Theme.surfaceText
+                            onClicked: root.runQuickAction("toggle_floating")
                         }
 
-                        // Fullscreen / Monocle toggle
-                        Rectangle {
+                        DankButton {
                             width: actionRow.buttonWidth
-                            implicitHeight: 34
-                            radius: Theme.cornerRadius - 2
-                            color: root.currentState && root.currentState.isFullscreen ? Qt.alpha(Theme.primary, 0.2) : Theme.surfaceContainer
-                            border.color: root.currentState && root.currentState.isFullscreen ? Theme.primary : Theme.outline
-                            border.width: 1
-
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 5
-                                DankIcon {
-                                    name: "fullscreen"
-                                    size: 15
-                                    color: root.currentState && root.currentState.isFullscreen ? Theme.primary : Theme.surfaceText
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                StyledText {
-                                    text: "Fullscreen"
-                                    color: Theme.surfaceText
-                                    font.pixelSize: Theme.fontSizeSmall - 1
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                            }
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.runQuickAction("toggle_fullscreen")
-                            }
+                            buttonHeight: 36
+                            radius: Theme.cornerRadius
+                            iconName: "fullscreen"
+                            iconSize: Theme.iconSizeSmall
+                            text: "Fullscreen"
+                            backgroundColor: root.currentState && root.currentState.isFullscreen ? Theme.primaryContainer : Theme.surfaceContainerHigh
+                            textColor: root.currentState && root.currentState.isFullscreen ? Theme.primary : Theme.surfaceText
+                            onClicked: root.runQuickAction("toggle_fullscreen")
                         }
 
-                        // Group / Deck toggle
-                        Rectangle {
+                        DankButton {
                             width: actionRow.buttonWidth
-                            implicitHeight: 34
-                            radius: Theme.cornerRadius - 2
-                            color: root.currentState && root.currentState.isGrouped ? Qt.alpha(Theme.primary, 0.2) : Theme.surfaceContainer
-                            border.color: root.currentState && root.currentState.isGrouped ? Theme.primary : Theme.outline
-                            border.width: 1
-
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 5
-                                DankIcon {
-                                    name: "layers"
-                                    size: 15
-                                    color: root.currentState && root.currentState.isGrouped ? Theme.primary : Theme.surfaceText
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                StyledText {
-                                    text: "Group"
-                                    color: Theme.surfaceText
-                                    font.pixelSize: Theme.fontSizeSmall - 1
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                            }
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.runQuickAction("toggle_group")
-                            }
+                            buttonHeight: 36
+                            radius: Theme.cornerRadius
+                            iconName: "layers"
+                            iconSize: Theme.iconSizeSmall
+                            text: "Group"
+                            backgroundColor: root.currentState && root.currentState.isGrouped ? Theme.primaryContainer : Theme.surfaceContainerHigh
+                            textColor: root.currentState && root.currentState.isGrouped ? Theme.primary : Theme.surfaceText
+                            onClicked: root.runQuickAction("toggle_group")
                         }
 
-                        // Split toggle (Dwindle)
-                        Rectangle {
+                        DankButton {
                             width: actionRow.buttonWidth
-                            implicitHeight: 34
-                            radius: Theme.cornerRadius - 2
-                            color: Theme.surfaceContainer
-                            border.color: Theme.outline
-                            border.width: 1
-
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 5
-                                DankIcon {
-                                    name: "alt_route"
-                                    size: 15
-                                    color: Theme.surfaceText
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                StyledText {
-                                    text: "Split"
-                                    color: Theme.surfaceText
-                                    font.pixelSize: Theme.fontSizeSmall - 1
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                            }
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.runQuickAction("toggle_split")
-                            }
+                            buttonHeight: 36
+                            radius: Theme.cornerRadius
+                            iconName: "alt_route"
+                            iconSize: Theme.iconSizeSmall
+                            text: "Split"
+                            backgroundColor: Theme.surfaceContainerHigh
+                            textColor: Theme.surfaceText
+                            onClicked: root.runQuickAction("toggle_split")
                         }
                     }
                 }

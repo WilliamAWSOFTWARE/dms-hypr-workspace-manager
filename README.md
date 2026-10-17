@@ -89,9 +89,9 @@ Navigate to **DMS Settings → Plugins → Hyprland Layout Manager**:
 
 ## 🔧 Requirements
 
-- **Hyprland** (tested with 0.50.x through 0.56.2+).
+- **Hyprland** (tested on 0.50.x through 0.56.2+; fully supports both modern Lua configurations `hyprland.lua` and classic `hyprland.conf` syntax).
 - **DankMaterialShell (DMS)** v1.2.0 or higher.
-- **Python 3** (used by the lightweight layout daemon script `hypr_layout.py`).
+- **Python 3** (used by the lightweight layout helper script `hypr_layout.py`).
 
 ---
 

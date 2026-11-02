@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import Quickshell.Io
 import Quickshell.Hyprland
 import qs.Common
@@ -19,6 +20,7 @@ PluginComponent {
     property string previousLayoutRaw: ""
     property string lastError: ""
     property string queryBuffer: ""
+    property string setBuffer: ""
     property string pendingLayoutId: ""
     property bool hyprAvailable: true
     readonly property string rightClickFallbackId: "monocle"
@@ -38,8 +40,8 @@ PluginComponent {
     readonly property string monitorName: root.parentScreen && root.parentScreen.name ? String(root.parentScreen.name) : (currentState && currentState.monitor ? String(currentState.monitor) : "")
     readonly property string workspaceName: currentState && currentState.workspaceName ? String(currentState.workspaceName) : "1"
 
-    popoutWidth: isUltrawide ? (Theme.spacingM * 34) : (Theme.spacingM * 29)
-    popoutHeight: Math.min(Theme.spacingM * 26, root.parentScreen ? Math.round(root.parentScreen.height * 0.46) : (Theme.spacingM * 26))
+    popoutWidth: isUltrawide ? (Theme.spacingM * 38) : (Theme.spacingM * 34)
+    popoutHeight: Math.min(Theme.spacingM * 32, root.parentScreen ? Math.round(root.parentScreen.height * 0.65) : (Theme.spacingM * 32))
 
     onMonitorNameChanged: {
         root.refreshCurrentLayout();
@@ -93,10 +95,15 @@ PluginComponent {
 
     function setLayout(layoutId) {
         if (!layoutId) return;
+        if (setProcess.running) {
+            pendingLayoutId = layoutId;
+            return;
+        }
         pendingLayoutId = layoutId;
         lastError = "";
         recordLayoutTransition(layoutId);
 
+        setBuffer = "";
         setProcess.command = ["python3", root.scriptPath, "set", layoutId, root.monitorName];
         setProcess.running = true;
     }
@@ -145,10 +152,21 @@ PluginComponent {
     function visibleLayoutOptions() {
         const stored = loadPluginValue("scrollCycleLayouts", null);
         if (Array.isArray(stored) && stored.length > 0) {
-            return stored
-                .filter(entry => entry && entry.id && entry.enabled !== false)
-                .map(entry => LayoutPreviewData.findOption(entry.id))
-                .filter(option => option);
+            var knownIds = {};
+            for (var k = 0; k < stored.length; k++) {
+                if (stored[k] && stored[k].id) knownIds[stored[k].id] = true;
+            }
+            var list = stored
+                .filter(function(entry) { return entry && entry.id && entry.enabled !== false; })
+                .map(function(entry) { return LayoutPreviewData.findOption(entry.id); })
+                .filter(function(option) { return option !== null && option !== undefined; });
+            var allOpts = LayoutPreviewData.options();
+            for (var i = 0; i < allOpts.length; i++) {
+                if (!knownIds[allOpts[i].id]) {
+                    list.push(allOpts[i]);
+                }
+            }
+            return list.length > 0 ? list : LayoutPreviewData.options();
         }
         return LayoutPreviewData.options();
     }
@@ -170,7 +188,7 @@ PluginComponent {
     }
 
     function handleScroll(direction) {
-        const cooldown = Number(loadPluginValue("scrollSpeed", 250));
+        const cooldown = Math.max(100, Number(loadPluginValue("scrollSpeed", loadPluginValue("scrollCooldownMs", 250))));
         const now = Date.now();
         if (now - root.lastScrollCycleTime < cooldown) return;
         root.lastScrollCycleTime = now;
@@ -190,7 +208,7 @@ PluginComponent {
                 try {
                     const parsed = JSON.parse(root.queryBuffer.trim());
                     root.currentState = parsed;
-                    if (parsed.currentLayout) {
+                    if (parsed.currentLayout && !setProcess.running && !root.pendingLayoutId) {
                         root.recordLayoutTransition(parsed.currentLayout);
                     }
                     root.hyprAvailable = true;
@@ -211,13 +229,16 @@ PluginComponent {
         id: setProcess
         stdout: SplitParser {
             onRead: data => {
-                root.queryBuffer += data;
+                root.setBuffer += data;
             }
         }
         onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0 && root.queryBuffer.trim().length > 0) {
+            const nextToApply = root.pendingLayoutId;
+            root.pendingLayoutId = "";
+
+            if (exitCode === 0 && root.setBuffer.trim().length > 0) {
                 try {
-                    const parsed = JSON.parse(root.queryBuffer.trim());
+                    const parsed = JSON.parse(root.setBuffer.trim());
                     root.currentState = parsed;
                     if (parsed.currentLayout) {
                         root.recordLayoutTransition(parsed.currentLayout);
@@ -231,7 +252,11 @@ PluginComponent {
                 root.lastError = "Failed to apply layout in Hyprland";
                 root.refreshCurrentLayout();
             }
-            root.queryBuffer = "";
+            root.setBuffer = "";
+
+            if (nextToApply && nextToApply !== root.currentLayoutRaw) {
+                root.setLayout(nextToApply);
+            }
         }
     }
 
@@ -246,6 +271,7 @@ PluginComponent {
     // Horizontal Pill on the DankBar
     horizontalBarPill: Component {
         HyprWorkspacePill {
+            anchors.fill: parent
             available: root.hyprAvailable
             code: root.currentLayoutCode
             label: root.currentLayoutLabel
@@ -260,6 +286,7 @@ PluginComponent {
     // Vertical Pill on the DankBar
     verticalBarPill: Component {
         HyprWorkspacePill {
+            anchors.fill: parent
             vertical: true
             available: root.hyprAvailable
             code: root.currentLayoutCode
@@ -359,11 +386,48 @@ PluginComponent {
                     contentWidth: width
                     contentHeight: buttonGrid.implicitHeight + Theme.spacingS * 2
 
+                    ScrollBar.vertical: ScrollBar {
+                        id: vScrollBar
+                        policy: gridFlickable.contentHeight > gridFlickable.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
+                        visible: gridFlickable.contentHeight > gridFlickable.height
+                        width: 6
+                        minimumSize: 0.1
+                        opacity: (hovered || pressed || active) ? 1.0 : 0.6
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.shortDuration
+                            }
+                        }
+                        contentItem: Rectangle {
+                            radius: width / 2
+                            color: Theme.primary
+                            opacity: vScrollBar.pressed ? 0.9 : (vScrollBar.hovered ? 0.75 : 0.5)
+                        }
+                        background: Rectangle {
+                            radius: width / 2
+                            color: Theme.surfaceContainerHighest
+                            opacity: 0.3
+                        }
+                    }
+
+                    WheelHandler {
+                        target: gridFlickable
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                        onWheel: event => {
+                            const step = 60;
+                            const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
+                            if (delta === 0) return;
+                            const newY = gridFlickable.contentY - (delta > 0 ? step : -step);
+                            gridFlickable.contentY = Math.max(0, Math.min(newY, Math.max(0, gridFlickable.contentHeight - gridFlickable.height)));
+                            event.accepted = true;
+                        }
+                    }
+
                     Grid {
                         id: buttonGrid
                         x: Theme.spacingM
                         y: Theme.spacingS
-                        width: parent.width - Theme.spacingM * 2 - Theme.spacingS
+                        width: parent.width - Theme.spacingM * 2 - (vScrollBar.visible ? Theme.spacingM : Theme.spacingS)
                         columns: root.gridColumns
                         spacing: Theme.spacingS
 
@@ -372,7 +436,7 @@ PluginComponent {
 
                             delegate: HyprLayoutTile {
                                 required property var modelData
-                                width: (buttonGrid.width - buttonGrid.spacing * (buttonGrid.columns - 1)) / buttonGrid.columns
+                                width: Math.floor((buttonGrid.width - buttonGrid.spacing * (buttonGrid.columns - 1)) / buttonGrid.columns)
                                 layout: modelData
                                 selected: root.isCurrentLayout(modelData.id)
                                 busy: root.busy
@@ -398,7 +462,7 @@ PluginComponent {
                         anchors.centerIn: parent
                         spacing: Theme.spacingS
 
-                        readonly property real buttonWidth: (width - spacing * 3) / 4
+                        readonly property real buttonWidth: Math.floor((width - spacing * 3) / 4)
 
                         DankButton {
                             width: actionRow.buttonWidth

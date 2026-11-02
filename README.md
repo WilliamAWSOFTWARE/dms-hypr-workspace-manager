@@ -3,7 +3,7 @@
 [![Hyprland](https://img.shields.io/badge/Hyprland-0.50%2B-blue?logo=wayland&logoColor=white)](https://hyprland.org)
 [![DankMaterialShell](https://img.shields.io/badge/DMS-Plugin-purple?logo=material-design&logoColor=white)](https://github.com/AvengeMedia/DankMaterialShell)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.2.0-green.svg)](plugin.json)
+[![Version](https://img.shields.io/badge/version-1.2.1-green.svg)](plugin.json)
 
 A visual layout switcher, cycle rotator, and window management plugin for **Hyprland** in **DankMaterialShell (DMS)**, bringing the versatile layout workflow of MangoWM into Hyprland with native Material Design aesthetics.
 
@@ -14,14 +14,15 @@ A visual layout switcher, cycle rotator, and window management plugin for **Hypr
 ## 🎯 Features
 
 - **Visual Layout Popout**: Interactive popout grid showing live wireframe schematics of 8 native Hyprland layout arrangements.
+- **Smooth Popout Scrolling**: Integrated custom scrollbar and mouse-wheel support (`WheelHandler`) ensuring all cards and controls are accessible on any screen resolution.
 - **DankBar Status Pill**: Displays the active layout icon and mnemonic code (e.g., `DW`, `T`, `CT`, `M`, `RT`) directly in your bar.
 - **Effortless Mouse Controls**:
   - **Left-Click**: Opens the visual layout selector popout.
   - **Right-Click**: Instantly toggles between your current layout and your preferred target (default: `Monocle` / Fullscreen).
   - **Middle-Click**: Instantly toggles a secondary layout (default: `Center Tile`).
-  - **Scroll Wheel**: Cycles smoothly through your enabled layout rotation list.
+  - **Scroll Wheel**: Cycles smoothly through your enabled layout rotation list without index sticking.
 - **Quick Action Dock**: Direct toggles for **Float**, **Fullscreen**, **Tabbed Group (Deck)**, and **Dwindle Split Direction** inside the popout.
-- **Responsive Multi-Monitor Design**: Automatically calculates proportional dimensions (3-column layout on standard screens, 4-column layout on ultrawide monitors) per display.
+- **Responsive Multi-Monitor Design**: Automatically calculates proportional dimensions (3-column layout on standard screens, 4-column layout on ultrawide monitors) per display with robust IPC batch querying.
 - **Configurable Rotation & Settings**: Customize rotation order, hide unused layouts, set cooldown speeds, and configure quick-toggle targets from the DMS Settings UI.
 
 ---
@@ -49,7 +50,7 @@ Displays interactive preview cards for each layout mode. The active layout is hi
 | **`K`** | **Deck** | Focused Window | Tabbed window grouping (deck) toggled on the active window. |
 
 > [!NOTE]
-> **Scope of Layout Operations**: Setting general layouts (`Tile`, `Right Tile`, `Vertical Tile`, `Center Tile`, `Vertical Fair`, `Dwindle`) changes Hyprland's runtime layout configuration globally across workspaces. Setting `Monocle` or `Deck` toggles fullscreen or tabbed grouping on the currently focused window.
+> **Scope & Reversibility**: All 8 native layouts are 100% reversible in runtime configuration and bar cycle rotation. Setting general layouts (`Tile`, `Right Tile`, `Vertical Tile`, `Center Tile`, `Vertical Fair`, `Dwindle`) changes Hyprland's runtime layout configuration. Setting `Monocle` or `Deck` toggles fullscreen or tabbed grouping on the currently focused window. External layouts like Scroller (`hyprscroller`) are recognized gracefully when configured in Hyprland.
 
 ---
 
@@ -86,7 +87,7 @@ Navigate to **DMS Settings → Plugins → Hyprland Layout Manager**:
 
 ## 🔧 Requirements
 
-- **Hyprland** (tested on 0.50.x through 0.56.2+; fully supports both modern Lua configurations `hyprland.lua` and classic `hyprland.conf` syntax).
+- **Hyprland** (tested on 0.50.x through 0.57.0+; fully supports both modern Lua configurations `hyprland.lua` and classic `hyprland.conf` syntax).
 - **DankMaterialShell (DMS)** v1.2.0 or higher.
 - **Python 3** (used by the lightweight layout helper script `hypr_layout.py`).
 

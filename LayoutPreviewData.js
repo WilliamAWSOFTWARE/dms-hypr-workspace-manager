@@ -78,6 +78,17 @@ function findOption(value) {
         }
     }
 
+    // Fallback recognition for external scroller plugin
+    if (lower === "scroller" || lower === "s") {
+        return {
+            id: "scroller",
+            label: "Scroller",
+            code: "S",
+            icon: "view_carousel",
+            aliases: ["scroller", "S"]
+        };
+    }
+
     return null;
 }
 
@@ -150,6 +161,13 @@ function windowSpecs(layoutId) {
             { x: 0.62, y: 0.06, w: 0.26, h: 0.78, opacity: 0.72, z: 1 },
             { x: 0.68, y: 0.16, w: 0.24, h: 0.58, opacity: 0.82, z: 2 },
             { x: 0.74, y: 0.26, w: 0.22, h: 0.38, opacity: 0.92, z: 4 }
+        ];
+    case "scroller":
+        return [
+            { x: 0.02, y: 0.18, w: 0.22, h: 0.64, opacity: 0.72 },
+            { x: 0.20, y: 0.08, w: 0.24, h: 0.84, opacity: 0.82 },
+            { x: 0.42, y: 0.0, w: 0.30, h: 1.0, accent: true, z: 2 },
+            { x: 0.70, y: 0.08, w: 0.24, h: 0.84, opacity: 0.82 }
         ];
     default:
         return [

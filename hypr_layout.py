@@ -46,26 +46,45 @@ def hypr_keyword(key, val):
         sys.stderr.write(f"hypr_keyword error: {e}\n")
         return False
 
+def _decode_json_stream(raw_text):
+    decoder = json.JSONDecoder()
+    idx = 0
+    items = []
+    length = len(raw_text)
+    while idx < length:
+        while idx < length and raw_text[idx].isspace():
+            idx += 1
+        if idx >= length:
+            break
+        try:
+            obj, end = decoder.raw_decode(raw_text, idx)
+            items.append(obj)
+            idx = end
+        except Exception:
+            break
+    return items
+
 def get_state(target_monitor=None):
     gl = "dwindle"
     mo = "left"
     mons = []
     aw = {}
+    workspaces = []
 
     try:
-        raw = subprocess.check_output(
-            ["hyprctl", "--batch", "j/getoption general:layout ; j/getoption master:orientation ; j/monitors ; j/activewindow"],
-            timeout=2
-        ).decode()
-        parts = [p.strip() for p in raw.split("\n\n") if p.strip()]
-        if len(parts) >= 1:
-            gl = json.loads(parts[0]).get("str", "dwindle")
-        if len(parts) >= 2:
-            mo = json.loads(parts[1]).get("str", "left")
-        if len(parts) >= 3:
-            mons = json.loads(parts[2])
-        if len(parts) >= 4:
-            aw = json.loads(parts[3])
+        batch_cmd = "j/getoption general:layout ; j/getoption master:orientation ; j/monitors ; j/activewindow ; j/workspaces"
+        raw = subprocess.check_output(["hyprctl", "--batch", batch_cmd], timeout=2).decode()
+        items = _decode_json_stream(raw)
+        if len(items) >= 1 and isinstance(items[0], dict):
+            gl = items[0].get("str", "dwindle")
+        if len(items) >= 2 and isinstance(items[1], dict):
+            mo = items[1].get("str", "left")
+        if len(items) >= 3 and isinstance(items[2], list):
+            mons = items[2]
+        if len(items) >= 4 and isinstance(items[3], dict):
+            aw = items[3]
+        if len(items) >= 5 and isinstance(items[4], list):
+            workspaces = items[4]
     except Exception:
         try:
             gl = json.loads(subprocess.check_output(["hyprctl", "-j", "getoption", "general:layout"], timeout=1)).get("str", "dwindle")
@@ -81,6 +100,10 @@ def get_state(target_monitor=None):
             pass
         try:
             aw = json.loads(subprocess.check_output(["hyprctl", "-j", "activewindow"], timeout=1))
+        except Exception:
+            pass
+        try:
+            workspaces = json.loads(subprocess.check_output(["hyprctl", "-j", "workspaces"], timeout=1))
         except Exception:
             pass
 
@@ -109,12 +132,24 @@ def get_state(target_monitor=None):
                     monitor_name = m.get("name", monitor_name)
                     break
 
+    current_ws_id = ws.get("id")
+    ws_full_info = None
+    if workspaces and current_ws_id is not None:
+        for w in workspaces:
+            if w.get("id") == current_ws_id:
+                ws_full_info = w
+                break
+
     # Check if workspace has a per-workspace tiledLayout override
-    ws_tiled = ws.get("tiledLayout")
-    if ws_tiled and ws_tiled in ("dwindle", "master"):
-        gl = ws_tiled
+    if ws_full_info:
+        ws_tiled = ws_full_info.get("tiledLayout")
+        if ws_tiled and ws_tiled in ("dwindle", "master", "scroller", "scrolling"):
+            gl = ws_tiled
 
     fs = bool(aw.get("fullscreen", 0))
+    if not fs and ws_full_info and ws_full_info.get("hasfullscreen"):
+        fs = True
+
     grouped = bool(aw.get("grouped", []))
     floating = bool(aw.get("floating", False))
     pinned = bool(aw.get("pinned", False))
@@ -123,6 +158,8 @@ def get_state(target_monitor=None):
         layout_id = "monocle"
     elif grouped:
         layout_id = "deck"
+    elif gl in ("scroller", "scrolling"):
+        layout_id = "scroller"
     elif gl == "master":
         if mo == "right":
             layout_id = "right_tile"
@@ -147,7 +184,8 @@ def get_state(target_monitor=None):
         "vertical_fair": ("Vertical Fair", "VF", "vertical_distribute"),
         "dwindle": ("Dwindle", "DW", "account_tree"),
         "monocle": ("Monocle", "M", "fullscreen"),
-        "deck": ("Deck", "K", "layers")
+        "deck": ("Deck", "K", "layers"),
+        "scroller": ("Scroller", "S", "view_carousel")
     }
 
     meta = LAYOUT_METAS.get(layout_id, (layout_id.capitalize(), layout_id[:2].upper(), "view_quilt"))
@@ -179,10 +217,16 @@ def ensure_monitor_focus(target_monitor):
         for m in mons:
             if str(m.get("name", "")).strip().lower() == str(target_monitor).strip().lower():
                 ws_id = m.get("activeWorkspace", {}).get("id")
-                if ws_id is not None:
-                    if has_lua():
-                        hypr_eval(f"hl.dispatch(hl.dsp.workspace.change_id({ws_id}))")
-                    else:
+                mon_name = m.get("name")
+                if has_lua():
+                    if ws_id is not None:
+                        hypr_eval(f"pcall(function() hl.dispatch(hl.dsp.focus({{ workspace = {ws_id} }})) end)")
+                    if mon_name:
+                        hypr_eval(f"pcall(function() hl.dispatch(hl.dsp.focus({{ monitor = '{mon_name}' }})) end)")
+                else:
+                    if mon_name:
+                        hypr_dispatch(f"focusmonitor {mon_name}")
+                    if ws_id is not None:
                         hypr_dispatch(f"workspace {ws_id}")
                 break
     except Exception:
@@ -198,11 +242,11 @@ def set_layout(layout_id, target_monitor=None):
     use_lua = has_lua()
 
     if layout_id == "monocle":
-        if not is_fs:
-            if use_lua:
-                hypr_eval("hl.dispatch(hl.dsp.window.fullscreen())")
-            else:
-                hypr_dispatch("fullscreen 1")
+        # Toggle fullscreen
+        if use_lua:
+            hypr_eval("hl.dispatch(hl.dsp.window.fullscreen())")
+        else:
+            hypr_dispatch("fullscreen 1")
     elif layout_id == "deck":
         if is_fs:
             if use_lua:
@@ -235,6 +279,8 @@ def set_layout(layout_id, target_monitor=None):
                 hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'center' } })")
             elif layout_id == "vertical_fair":
                 hypr_eval("hl.config({ general = { layout = 'master' }, master = { orientation = 'bottom' } })")
+            elif layout_id == "scroller":
+                hypr_eval("pcall(function() hl.config({ general = { layout = 'scroller' } }) end)")
             else:
                 hypr_eval(f"hl.config({{ general = {{ layout = '{layout_id}' }} }})")
         else:
@@ -255,6 +301,8 @@ def set_layout(layout_id, target_monitor=None):
             elif layout_id == "vertical_fair":
                 hypr_keyword("general:layout", "master")
                 hypr_keyword("master:orientation", "bottom")
+            elif layout_id == "scroller":
+                hypr_keyword("general:layout", "scroller")
             else:
                 hypr_keyword("general:layout", layout_id)
 
@@ -292,7 +340,7 @@ def quick_action(action, target_monitor=None):
             hypr_dispatch("layoutmsg togglesplit")
     elif action == "swap_master":
         if use_lua:
-            hypr_eval("hl.dispatch(hl.dsp.layout('swapwithmaster'))")
+            hypr_eval("pcall(function() hl.dispatch(hl.dsp.layout('swapwithmaster')) end)")
         else:
             hypr_dispatch("layoutmsg swapwithmaster")
 

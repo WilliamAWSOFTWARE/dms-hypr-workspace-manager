@@ -7,6 +7,9 @@
 
 A visual layout switcher, cycle rotator, and window management plugin for **Hyprland** in **DankMaterialShell (DMS)**, bringing the versatile layout workflow of MangoWM into Hyprland with native Material Design aesthetics.
 
+> [!NOTE]
+> **Plugin ID & Repository Name**: This plugin is identified as `hyprWorkspaceManager` (repository: `dms-hypr-workspace-manager`). Originally conceived as a workspace switcher, from v1.2.0 onwards it evolved into a dedicated **Hyprland Layout Manager** to deliver robust dynamic layout rotation, wireframe previews, and focused window state management.
+
 ![Desktop Overview](assets/desktop-preview.png)
 
 ---
@@ -64,7 +67,7 @@ Displays interactive preview cards for each layout mode. The active layout is hi
 
 ### From the Layout Popout
 1. Click on any layout card to switch the desktop layout or toggle fullscreen/deck on the active window.
-2. Use the **Quick Actions** bar at the bottom:
+2. Use the **Quick Actions** dock at the bottom:
    - **Float**: Toggle active window between tiling and floating mode.
    - **Fullscreen**: Toggle fullscreen mode on the active window.
    - **Group**: Group active window into a tabbed group or toggle group lock.
@@ -74,7 +77,7 @@ Displays interactive preview cards for each layout mode. The active layout is hi
 
 ## ⚙️ Configuration (DMS Settings)
 
-Navigate to **DMS Settings → Plugins → Hyprland Layout Manager**:
+Navigate to **DMS Settings (`SUPER + N`) → Plugins → Hyprland Layout Manager**:
 
 1. **Right-click toggle target**: Select which layout activates when right-clicking the bar pill (e.g., `Monocle`, `Dwindle`, `Center Tile`, or `None`).
 2. **Middle-click toggle target**: Select which layout activates when clicking the scroll wheel.
@@ -97,17 +100,67 @@ Navigate to **DMS Settings → Plugins → Hyprland Layout Manager**:
 
 1. Clone or copy the repository into your DMS plugins directory:
    ```bash
-   git clone https://github.com/WilliamAWSOFTWARE/dms-hypr-workspace-manager.git ~/.config/DankMaterialShell/plugins/hyprWorkspaceManager
+   git clone https://github.com/WilliamAWSOFTWARE/dms-hypr-workspace-manager.git ~/.config/dms/plugins/hyprWorkspaceManager
    ```
+   *(Note: If using legacy symlinks, `~/.config/DankMaterialShell/plugins/hyprWorkspaceManager` also works).*
 
 2. Open **DMS Settings** (`SUPER + N` or via Control Center) → **Plugins** and verify **Hyprland Layout Manager** is enabled.
 
-3. Add the widget to your bar configuration in **DMS Settings → Bar Settings → Right Widgets**, or verify `"hyprWorkspaceManager"` is listed under `rightWidgets` in `~/.config/DankMaterialShell/settings.json`.
+3. Add the widget to your bar configuration in **DMS Settings → Bar Settings → Right Widgets**, or verify `"hyprWorkspaceManager"` is listed under `rightWidgets` in `~/.config/dms/settings.json`:
+   ```json
+   {
+     "id": "hyprWorkspaceManager",
+     "enabled": true
+   }
+   ```
 
 4. Reload DMS:
    ```bash
    dms restart
    ```
+
+---
+
+<details>
+<summary><b>🇪🇸 Documentación en Español (Haz clic para expandir)</b></summary>
+
+### Gestor de Disposiciones de Hyprland (Plugin DMS)
+
+Conmutador visual de layouts, rotador por rueda de ratón y gestor de ventanas para **Hyprland** en **DankMaterialShell (DMS)**, integrando el flujo de trabajo de MangoWM con estética nativa Material Design.
+
+> [!NOTE]
+> **ID del Plugin y Nombre del Repositorio**: El plugin se registra como `hyprWorkspaceManager` (repositorio: `dms-hypr-workspace-manager`). Aunque inicialmente fue concebido como gestor de escritorios, a partir de la v1.2.0 evolucionó a un **Layout Manager** enfocado en el intercambio dinámico de disposiciones de ventanas, previsualizaciones esquemáticas y control de estados.
+
+#### Características
+- **Popout Visual de Layouts**: Cuadrícula interactiva con esquemas tipo wireframe de 8 disposiciones nativas de Hyprland.
+- **Desplazamiento Suave**: Scrollbar vertical personalizada y soporte para rueda de ratón (`WheelHandler`).
+- **Pill en DankBar**: Muestra el icono y código mnemotécnico del layout activo (`DW`, `T`, `CT`, `M`, `RT`, etc.).
+- **Control con Ratón**:
+  - **Clic Izquierdo**: Abre el popout selector.
+  - **Clic Derecho**: Alterna el layout preferido (por defecto: `Monocle` / Pantalla Completa).
+  - **Clic Central**: Alterna un layout secundario (por defecto: `Center Tile`).
+  - **Rueda de Ratón**: Cicla secuencialmente por la lista de layouts habilitados sin saltos bruscos.
+- **Barra de Acciones Rápidas**: Alterna flotante (*Float*), pantalla completa (*Fullscreen*), grupo de pestañas (*Group*) y orientación de división (*Split*).
+
+#### Modos de Layout Soportados
+| Código | Nombre | Alcance | Descripción |
+| :---: | :--- | :---: | :--- |
+| **`T`** | **Tile** | Global | Ventana maestra a la izquierda, pila de columnas a la derecha. |
+| **`RT`** | **Right Tile** | Global | Ventana maestra a la derecha, pila de columnas a la izquierda. |
+| **`VT`** | **Vertical Tile** | Global | Ventana maestra arriba, ventanas secundarias abajo. |
+| **`CT`** | **Center Tile** | Global | Ventana maestra al centro, flanqueada por columnas a ambos lados. |
+| **`VF`** | **Vertical Fair** | Global | Ventana maestra abajo, ventanas secundarias arriba. |
+| **`DW`** | **Dwindle** | Global | Espiral en árbol binario clásica de Hyprland. |
+| **`M`** | **Monocle** | Ventana Activa | Modo pantalla completa en la ventana enfocada. |
+| **`K`** | **Deck** | Ventana Activa | Agrupación por pestañas (*tabs*) en la ventana enfocada. |
+
+#### Instalación
+```bash
+git clone https://github.com/WilliamAWSOFTWARE/dms-hypr-workspace-manager.git ~/.config/dms/plugins/hyprWorkspaceManager
+dms restart
+```
+
+</details>
 
 ---
 
